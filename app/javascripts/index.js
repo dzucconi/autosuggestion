@@ -3,13 +3,14 @@ import parameters from 'queryparams';
 import dom from './lib/dom';
 import type from './lib/type';
 import keyboard from './lib/keyboard';
+import states from './lib/states';
 
 window.parameters = parameters;
 
 const CONFIG = {
   api: {
     base: 'http://api.corrasable.com',
-    endpoint: '/words/search',
+    endpoint: '/phonetic/suggestions',
   },
 };
 
@@ -21,35 +22,48 @@ const DOM = dom([
 ]);
 
 export default () => {
-  const { message, algorithm } = parameters({
+  const { message } = parameters({
     message: 'Maybe.',
-    algorithm: 'soundex',
   });
 
-  const fetch = token => {
-    const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?q=${token}&algorithm=${algorithm}&limit=3`;
+  const fetch = text => {
+    const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?text=${text}`;
     return axios.get(url);
   };
 
-  type(DOM.input, message, aggregated => {
-    const token = aggregated.split(' ').pop();
+  fetch(states(message).join(' '))
+    .then(({ data: [{ suggestions }]}) => {
+      // console.log(suggestions);
 
-    if (token === '') return Promise.resolve(true);
+      const playback = () =>
+        type(DOM.input, message, aggregated => {
+          const token = aggregated.split(' ').pop();
+          const match = token.match(/(\w+)/g);
 
-    const stripped = token.match(/(\w+)/g)[0];
+          if (!match) return Promise.resolve(true);
 
-    DOM.keyboard.innerHTML = keyboard(stripped.substr(-1));
+          const letter = match && match[0];
+          const tokens = suggestions[suggestions.length - 1];
 
-    return fetch(stripped).then(({ data }) => {
-      const suggestions = `
-        ${data.map(({ word }) => `
-          <div class='suggestion'>
-            ${word.toLowerCase()}
-          </div>
-        `).join('')}
-      `;
+          // console.log(letter, tokens);
 
-      DOM.suggestions.innerHTML = suggestions;
+          DOM.suggestions.innerHTML = `
+            ${tokens.map(token => `
+              <div class='suggestion'>
+                ${token.toLowerCase()}
+              </div>
+            `).join('')}
+          `;
+
+          DOM.keyboard.innerHTML = keyboard(letter.substr(-1));
+
+          return Promise.resolve(true);
+        }).then(() => {
+          DOM.input.innerHTML = '';
+
+          playback();
+        });
+
+      playback();
     });
-  });
 };
