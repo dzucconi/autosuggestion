@@ -1,29 +1,55 @@
 import axios from 'axios';
 import parameters from 'queryparams';
+import dom from './lib/dom';
+import type from './lib/type';
+import keyboard from './lib/keyboard';
 
 window.parameters = parameters;
 
-const DOM = {
-  app: document.getElementById('app'),
+const CONFIG = {
+  api: {
+    base: 'http://api.corrasable.com',
+    endpoint: '/words/search',
+  },
 };
 
+const DOM = dom([
+  'app',
+  'input',
+  'suggestions',
+  'keyboard',
+]);
+
 export default () => {
-  const { message } = parameters({
-    message: 'Hello world. How are you doing today?',
+  const { message, algorithm } = parameters({
+    message: 'Maybe.',
+    algorithm: 'soundex',
   });
 
-  const tokens = message.match(/(\w+)/g);
+  const fetch = token => {
+    const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?q=${token}&algorithm=${algorithm}&limit=3`;
+    return axios.get(url);
+  };
 
-  tokens.reduce((promise, token) => {
-    return promise.then(() => {
-      return axios.get(`http://api.corrasable.com/words/search?q=${token}&algorithm=nysiis`)
-        .then(({ data }) => {
-          DOM.app.innerHTML += `
-            <div>
-              <strong>${token}</strong>: ${data.slice(0, 3).map(({ word }) => word.toLowerCase()).join(', ')}
-            </div>
-          `;
-        });
+  type(DOM.input, message, aggregated => {
+    const token = aggregated.split(' ').pop();
+
+    if (token === '') return Promise.resolve(true);
+
+    const stripped = token.match(/(\w+)/g)[0];
+
+    DOM.keyboard.innerHTML = keyboard(stripped.substr(-1));
+
+    return fetch(stripped).then(({ data }) => {
+      const suggestions = `
+        ${data.map(({ word }) => `
+          <div class='suggestion'>
+            ${word.toLowerCase()}
+          </div>
+        `).join('')}
+      `;
+
+      DOM.suggestions.innerHTML = suggestions;
     });
-  }, Promise.resolve(true));
+  });
 };
