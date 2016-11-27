@@ -8,8 +8,8 @@ window.parameters = parameters;
 
 const CONFIG = {
   api: {
-    base: 'http://localhost:5000',
-    endpoint: '/words/search',
+    base: 'http://api.corrasable.com',
+    endpoint: '/phonetic/suggestions',
   },
 };
 
@@ -21,38 +21,43 @@ const DOM = dom([
 ]);
 
 export default () => {
-  const { message, algorithm } = parameters({
+  return;
+
+  const { message } = parameters({
     message: 'Maybe.',
-    algorithm: 'soundex',
   });
 
   const fetch = token => {
-    const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?q=${token}&algorithm=${algorithm}&limit=3`;
+    const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?text=${token}`;
     return axios.get(url);
   };
 
   type(DOM.input, message, aggregated => {
     const token = aggregated.split(' ').pop();
-
-    if (token === '') return Promise.resolve(true);
-
     const match = token.match(/(\w+)/g);
+
+    DOM.keyboard.innerHTML = `
+      <div class='key'>
+        ${token.substr(-1) || 'space'}
+      </div>
+    `;
+
+    if (!match) return Promise.resolve(true);
+
     const stripped = match && match[0];
 
-    DOM.keyboard.innerHTML = keyboard(stripped.substr(-1));
+    return fetch(stripped)
+      .then(({ data }) => data[0][stripped])
+      .then(tokens => {
+        const suggestions = `
+          ${tokens.map(token => `
+            <div class='suggestion'>
+              ${token.toLowerCase()}
+            </div>
+          `).join('')}
+        `;
 
-    return fetch(stripped).then(({ data }) => {
-      DOM.keyboard.innerHTML = keyboard();
-
-      const suggestions = `
-        ${data.map(({ word }) => `
-          <div class='suggestion'>
-            ${word.toLowerCase()}
-          </div>
-        `).join('')}
-      `;
-
-      DOM.suggestions.innerHTML = suggestions;
-    });
+        DOM.suggestions.innerHTML = suggestions;
+      });
   });
 };

@@ -1,7 +1,7 @@
 import rand from './rand';
 import decode from './decode';
 
-const range = [0, 250];
+const range = [0, 0];
 
 const timeout = ms =>
   new Promise(resolve => setTimeout(resolve, ms));
