@@ -18,11 +18,12 @@ export default (el, message, fn = (x => x)) => {
         return new Promise(resolve => {
           aggregated.push(letter);
 
-          el && (el.innerHTML += `<span class='letter'>${letter}</span>`);
-
           const fetch = fn(aggregated.join(''));
 
           return fetch
+            .then(() => {
+              el && (el.innerHTML += `<span class='letter'>${letter}</span>`);
+            })
             .then(() => timeout(rand(range[0], range[1])))
             .then(resolve);
         });
