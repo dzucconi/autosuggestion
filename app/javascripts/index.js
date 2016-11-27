@@ -42,6 +42,8 @@ export default () => {
 
           if (!match) return Promise.resolve(true);
 
+          suggestions.push(suggestions.shift());
+
           const letter = match && match[0];
           const tokens = suggestions[suggestions.length - 1];
 
