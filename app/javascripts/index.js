@@ -4,6 +4,8 @@ import dom from './lib/dom';
 import type from './lib/type';
 import keyboard from './lib/keyboard';
 import states from './lib/states';
+import fill from './lib/fill';
+import timeout from './lib/timeout';
 
 window.parameters = parameters;
 
@@ -16,27 +18,30 @@ const CONFIG = {
 
 const DOM = dom([
   'app',
+  'indicator',
   'input',
   'suggestions',
   'keyboard',
 ]);
 
+const { message, min, max } = parameters({
+  message: 'We make a star as we make a constellation',
+  min: 0,
+  max: 250,
+});
+
+const fetch = text => {
+  const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?text=${text}`;
+  return axios.get(url);
+};
+
 export default () => {
-  const { message } = parameters({
-    message: 'Maybe.',
-  });
-
-  const fetch = text => {
-    const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?text=${text}`;
-    return axios.get(url);
-  };
-
   fetch(states(message).join(' '))
     .then(({ data: [{ suggestions }]}) => {
-      // console.log(suggestions);
+      DOM.indicator.parentNode.removeChild(DOM.indicator);
 
       const playback = () =>
-        type(DOM.input, message, aggregated => {
+        type(DOM.input, message, [min, max], aggregated => {
           const token = aggregated.split(' ').pop();
           const match = token.match(/(\w+)/g);
 
@@ -45,9 +50,7 @@ export default () => {
           suggestions.push(suggestions.shift());
 
           const letter = match && match[0];
-          const tokens = suggestions[suggestions.length - 1];
-
-          // console.log(letter, tokens);
+          const tokens = fill(suggestions[suggestions.length - 1], 3, '…');
 
           DOM.suggestions.innerHTML = `
             ${tokens.map(token => `
@@ -60,12 +63,22 @@ export default () => {
           DOM.keyboard.innerHTML = keyboard(letter.substr(-1));
 
           return Promise.resolve(true);
-        }).then(() => {
-          DOM.input.innerHTML = '';
+        })
 
+        // Pause
+        .then(() => {
+          DOM.keyboard.innerHTML = keyboard();
+
+          return timeout(2500);
+        })
+
+        // Reset
+        .then(() => {
+          DOM.input.innerHTML = '';
           playback();
         });
 
+      // Begin
       playback();
     });
 };
