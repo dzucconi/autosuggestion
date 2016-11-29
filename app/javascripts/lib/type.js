@@ -1,12 +1,8 @@
 import rand from './rand';
 import decode from './decode';
+import timeout from './timeout';
 
-const range = [0, 250];
-
-const timeout = ms =>
-  new Promise(resolve => setTimeout(resolve, ms));
-
-export default (el, message, fn = (x => x)) => {
+export default (el, message, range, fn = (x => x)) => {
   const letters = decode(message).split('')
     .concat([' ', ' ', ' ']);
 
