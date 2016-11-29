@@ -9,7 +9,7 @@ export default active => {
     return `
       <div class='keyboard__row'>
         ${row.map(key => `
-          <span class='key ${key === active ? 'key--active' : ''}'>
+          <span class='key ${key === (active && active.toLowerCase()) ? 'key--active' : ''}'>
             ${key}
           </span>
         `).join('')}
