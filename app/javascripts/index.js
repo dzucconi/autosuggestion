@@ -1,20 +1,15 @@
-import axios from 'axios';
 import parameters from 'queryparams';
 import { knuthShuffle as shuffle } from 'knuth-shuffle';
+
+import * as questions from './api/questions';
+import * as suggestions from './api/suggestions';
+
 import dom from './lib/dom';
 import type from './lib/type';
 import keyboard from './lib/keyboard';
-import states from './lib/states';
 import fill from './lib/fill';
 
 window.parameters = parameters;
-
-const CONFIG = {
-  api: {
-    base: 'http://api.corrasable.com',
-    endpoint: '/phonetic/suggestions',
-  },
-};
 
 const DOM = dom([
   'app',
@@ -28,13 +23,6 @@ const { message, min, max } = parameters({
   min: 50,
   max: 250,
 });
-
-const fetch = text =>
-  axios.get(`${CONFIG.api.base}${CONFIG.api.endpoint}?text=${text}`);
-
-const suggest = text =>
-  fetch(states(text).join(' '))
-    .then(({ data: [{ suggestions }] }) => [text, suggestions]);
 
 export default () => {
   const play = promises =>
@@ -83,7 +71,7 @@ export default () => {
   const init = lines =>
     lines.reduce((promise, line) => {
       return promise.then(() => {
-        return play([suggest(line)])
+        return play([suggestions.fetch(line)])
           .then(() => {
             DOM.app.appendChild(DOM.indicator);
             DOM.keyboard.innerHTML = keyboard();
@@ -95,14 +83,9 @@ export default () => {
         DOM.keyboard.innerHTML = keyboard();
       });
 
-  const promise = message
-    ? Promise.resolve({ data: [{ text: message }] })
-    : axios.get('http://questions.damonzucconi.com/', {
-      headers: { 'Accepts': 'application/json' }
-    });
-
-  promise
-    .then(({ data }) => {
-      init(shuffle(data).map(question => question.text));
-    });
+  (message
+    ? Promise.resolve([message])
+    : questions.fetch())
+    .then(questions =>
+      init(shuffle(questions)));
 };
