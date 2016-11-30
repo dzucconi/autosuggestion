@@ -69,15 +69,18 @@ export default () => {
       });
 
   const init = lines =>
-    lines.reduce((promise, line) => {
-      return promise.then(() => {
-        return play([suggestions.fetch(line)])
-          .then(() => {
-            DOM.app.appendChild(DOM.indicator);
-            DOM.keyboard.innerHTML = keyboard();
-          });
-      });
-    }, Promise.resolve(true))
+    lines
+      .reduce((promise, line) => {
+        return promise.then(() => {
+          return play([suggestions.fetch(line)])
+            .then(() => {
+              DOM.app.appendChild(DOM.indicator);
+              DOM.keyboard.innerHTML = keyboard();
+            });
+        });
+      }, Promise.resolve(true))
+
+      // Done
       .then(() => {
         DOM.indicator.parentNode.removeChild(DOM.indicator);
         DOM.keyboard.innerHTML = keyboard();
