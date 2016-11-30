@@ -19,11 +19,18 @@ body {
   color: black;
   -webkit-font-smoothing: antialiased;
   font-family: 'Helvetica Neue', sans-serif;
-  font-size: 17px;
+  font-size: 24px;
   line-height: 1.25;
   font-weight: normal;
   padding: 1em;
   text-align: center;
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 17px;
+    padding: 0.5em;
+  }
 }
 
 .app {
@@ -31,6 +38,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  max-width: 75%;
 }
 
 .input {

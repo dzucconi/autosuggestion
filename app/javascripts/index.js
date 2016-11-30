@@ -1,11 +1,11 @@
 import axios from 'axios';
 import parameters from 'queryparams';
+import { knuthShuffle as shuffle } from 'knuth-shuffle';
 import dom from './lib/dom';
 import type from './lib/type';
 import keyboard from './lib/keyboard';
 import states from './lib/states';
 import fill from './lib/fill';
-import timeout from './lib/timeout';
 
 window.parameters = parameters;
 
@@ -25,18 +25,12 @@ const DOM = dom([
 ]);
 
 const { message, min, max } = parameters({
-  message: `We make a star
-  as we make a constellation
-  by putting its parts together
-  and marking off its boundaries`,
-  min: 0,
-  max: 150,
+  min: 50,
+  max: 250,
 });
 
-const fetch = text => {
-  const url = `${CONFIG.api.base}${CONFIG.api.endpoint}?text=${text}`;
-  return axios.get(url);
-};
+const fetch = text =>
+  axios.get(`${CONFIG.api.base}${CONFIG.api.endpoint}?text=${text}`);
 
 const suggest = text =>
   fetch(states(text).join(' '))
@@ -45,20 +39,26 @@ const suggest = text =>
 export default () => {
   const play = promises =>
     promises.shift()
+
       // Playback
       .then(([text, suggestions]) => {
+        DOM.input.innerHTML = ' ';
         DOM.indicator.parentNode.removeChild(DOM.indicator);
 
         return type(DOM.input, text, [min, max], aggregated => {
           const token = aggregated.split(' ').pop();
-          const match = token.match(/(\w+)/g);
+          const last = token.substr(-1);
 
-          if (!match) return Promise.resolve(true);
+          let tokens = [];
 
-          suggestions.push(suggestions.shift());
-
-          const letter = match && match[0];
-          const tokens = fill(suggestions[suggestions.length - 1], 3, '…');
+          if (last.match(/[a-z]/i)) {
+            suggestions.push(suggestions.shift());
+            tokens = fill(suggestions[suggestions.length - 1], 3, '…');
+            DOM.keyboard.innerHTML = keyboard(last);
+          } else {
+            tokens = fill([], 3, '…');
+            DOM.keyboard.innerHTML = keyboard();
+          }
 
           DOM.suggestions.innerHTML = `
             ${tokens.map(token => `
@@ -67,8 +67,6 @@ export default () => {
               </div>
             `).join('')}
           `;
-
-          DOM.keyboard.innerHTML = keyboard(letter.substr(-1));
 
           return Promise.resolve(true);
         });
@@ -82,14 +80,13 @@ export default () => {
         }
       });
 
-  const lines = message.split('\n').map(x => x.trim());
-
-  const init = () =>
+  const init = lines =>
     lines.reduce((promise, line) => {
       return promise.then(() => {
         return play([suggest(line)])
           .then(() => {
             DOM.app.appendChild(DOM.indicator);
+            DOM.keyboard.innerHTML = keyboard();
           });
       });
     }, Promise.resolve(true))
@@ -98,5 +95,14 @@ export default () => {
         DOM.keyboard.innerHTML = keyboard();
       });
 
-  init();
+  const promise = message
+    ? Promise.resolve({ data: [{ text: message }] })
+    : axios.get('http://questions.damonzucconi.com/', {
+      headers: { 'Accepts': 'application/json' }
+    });
+
+  promise
+    .then(({ data }) => {
+      init(shuffle(data).map(question => question.text));
+    });
 };
