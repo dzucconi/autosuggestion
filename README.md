@@ -1,3 +1,0 @@
-```
-brunch new -s https://github.com/dzucconi/skeleton ...
-```
