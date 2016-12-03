@@ -63,7 +63,7 @@ export default () => {
       // Reset
       .then(() => {
         if (promises.length) {
-          DOM.app.appendChild(DOM.indicator);
+          document.body.appendChild(DOM.indicator);
           return play(promises);
         }
       });
@@ -74,7 +74,7 @@ export default () => {
         return promise.then(() => {
           return play([suggestions.fetch(line)])
             .then(() => {
-              DOM.app.appendChild(DOM.indicator);
+              document.body.appendChild(DOM.indicator);
               DOM.keyboard.innerHTML = keyboard();
             });
         });
