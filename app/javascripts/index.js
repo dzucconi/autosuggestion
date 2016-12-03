@@ -22,7 +22,7 @@ const DOM = dom([
 
 const { message, min, max } = parameters({
   min: 50,
-  max: 250,
+  max: 750,
 });
 
 export default () => {
