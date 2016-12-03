@@ -8,6 +8,7 @@ import dom from './lib/dom';
 import type from './lib/type';
 import keyboard from './lib/keyboard';
 import fill from './lib/fill';
+import decode from './lib/decode';
 
 window.parameters = parameters;
 
@@ -44,7 +45,7 @@ export default () => {
             tokens = fill(suggestions[suggestions.length - 1], 3, '…');
             DOM.keyboard.innerHTML = keyboard(last);
           } else {
-            tokens = fill([], 3, '…');
+            tokens = fill([], 3, decode('&nbsp;'));
             DOM.keyboard.innerHTML = keyboard();
           }
 
