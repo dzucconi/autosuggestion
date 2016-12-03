@@ -1,28 +1,34 @@
-@keyframes spin {
-  100% { transform: rotate(360deg); }
+@keyframes blink {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bulge {
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .indicator {
   position: fixed;
-  top: 20px;
-  left: 20px;
-  width: 20px;
-  height: 20px;
-  z-index: 1;
-  border-radius: 50%;
-  pointer-events: none;
+  top: 1em;
+  left: 1em;
+  text-align: center;
+  animation: 2s bulge infinite ease-out;
+  font-size: 16px;
 }
-  .indicator:after {
-    display: block;
-    content: '';
-    border-radius: 50%;
-    height: 20px;
-    width: 20px;
-    border-width: 2px;
-    border-style: solid;
-    border-bottom-color: inherit;
-    border-right-color: transparent;
-    border-top-color: transparent;
-    border-left-color: transparent;
-    animation: spin 0.5s infinite linear;
+  .indicator > span {
+    opacity: 0.2;
+    letter-spacing: -4px;
   }
+    .indicator > span:nth-of-type(3) {
+      animation: 1s blink infinite 0.9999s;
+      padding-right: 4px;
+    }
+    .indicator > span:nth-of-type(2) {
+      animation: 1s blink infinite 0.6666s;
+    }
+    .indicator > span:nth-of-type(1) {
+      animation: 1s blink infinite 0.3333s;
+    }
